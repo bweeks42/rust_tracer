@@ -34,26 +34,6 @@ impl Hit {
 }
 
 
-// Color
-type Color = Vec3;
-fn to_color(u: &Color, n_samples: i64) -> String {
-    let mut r = u.x;
-    let mut g = u.y;
-    let mut b = u.z;
-
-    // Sample
-    let scale = 1.0 / n_samples as f64;
-    r = f64::sqrt(r * scale);
-    g = f64::sqrt(g * scale);
-    b = f64::sqrt(b * scale);
-
-    let ir = (256.0 * r.clamp(0.0, 0.999)) as i64;
-    let ig = (256.0 * g.clamp(0.0, 0.999)) as i64;
-    let ib = (256.0 * b.clamp(0.0, 0.999)) as i64;
-
-    format!("{} {} {}\n", ir, ig, ib)
-}
-
 fn hit_in_list(l: &Vec<Box<dyn Shape>>, r: &Ray, t_min: f64, t_max: f64, hit: &mut Hit) -> bool {
     let mut temp_hit = Hit {
         point: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
@@ -78,7 +58,26 @@ fn hit_in_list(l: &Vec<Box<dyn Shape>>, r: &Ray, t_min: f64, t_max: f64, hit: &m
     hit_anything
 }
 
-// Tracing
+// Color
+type Color = Vec3;
+fn to_color(u: &Color, n_samples: i64) -> String {
+    let mut r = u.x;
+    let mut g = u.y;
+    let mut b = u.z;
+
+    // Sample
+    let scale = 1.0 / n_samples as f64;
+    r = f64::sqrt(r * scale);
+    g = f64::sqrt(g * scale);
+    b = f64::sqrt(b * scale);
+
+    let ir = (256.0 * r.clamp(0.0, 0.999)) as i64;
+    let ig = (256.0 * g.clamp(0.0, 0.999)) as i64;
+    let ib = (256.0 * b.clamp(0.0, 0.999)) as i64;
+
+    format!("{} {} {}\n", ir, ig, ib)
+}
+
 fn ray_color(r: &Ray, v: &Vec<Box<dyn Shape>>, depth: i64) -> Color {
     if (depth <= 1) {
         return Color {x: 0.0, y: 0.0, z: 0.0}
@@ -99,10 +98,6 @@ fn ray_color(r: &Ray, v: &Vec<Box<dyn Shape>>, depth: i64) -> Color {
     let a = Vec3{x: 1.0, y: 1.0, z: 1.0} * (1.0-t);
     let b = Vec3{x: 0.5, y: 0.7, z: 1.0} * t;
     a + b
-}
-
-fn write_color(f: &mut File, c: Color, samples: i64) {
-    f.write_all(to_color(&c, samples).as_bytes());
 }
 
 fn main() {
