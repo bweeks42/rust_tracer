@@ -5,6 +5,7 @@ use rand::Rng;
 use threadpool::ThreadPool;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
+use std::env;
 
 // Hit
 struct Hit {
@@ -208,9 +209,17 @@ fn write_color(f: &mut File, c: Color, samples: i64) {
 }
 
 fn main() {
+    
+    // Args
+    let args: Vec<String> = env::args().collect();
+    let mut pixels:i64 = 1000;
+    if args.len() == 3 && args[1] == "-p" {
+        pixels = args[2].parse().unwrap();
+    }
+
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 5000;
+    let image_width = pixels;
     let image_height = (image_width as f64 / aspect_ratio) as i64;
     let samples_per_pixel = 100;
 
@@ -228,7 +237,11 @@ fn main() {
         vec![
             Box::new(Sphere{
                 center: Vec3 { x: 0.0, y: 0.0, z: -1.0 },
-                radius: 0.5
+                radius: 0.25
+            }),
+            Box::new(Sphere{
+                center: Vec3 { x: 1.5, y: 0.0, z: -2.5 },
+                radius: 0.25
             })
         ]
     );
@@ -241,7 +254,7 @@ fn main() {
     file.write_all(header.as_bytes());
 
     // Threadpool
-    let n_workers = 32;
+    let n_workers = 128;
     let pool = ThreadPool::new(n_workers);
     let (tx, rx) = channel();
 
@@ -265,11 +278,15 @@ fn main() {
                 }
                 row.push(pixel_color);
             }
-            tx.send((inv_j, row)).expect("Oops!");
+            let mut rows = String::new();
+            for c in row {
+                rows.push_str(to_color(&c, samples_per_pixel).as_str());
+            }
+            tx.send((inv_j, rows)).expect("Oops!");
         });
     }
     
-    let mut ordered:Vec<(i64, Vec<Vec3>)> = Vec::with_capacity(image_height as usize);
+    let mut ordered:Vec<(i64, String)> = Vec::with_capacity(image_height as usize);
     rx.iter().take(image_height as usize).for_each(|(i, v)| {
         ordered.push((i, v));
     });
@@ -279,14 +296,8 @@ fn main() {
         b.0.cmp(&a.0)
     });
 
-    println!("Constructing RGB String");
-    let mut outs = String::new();
-    for row in ordered {
-        for c in row.1 {
-            outs.push_str(to_color(&c, samples_per_pixel).as_str());
-        }
-    }
-
     println!("Writing to file");
-    file.write_all(outs.as_bytes());
+    for o in ordered {
+        file.write_all(o.1.as_bytes());
+    }
 }
