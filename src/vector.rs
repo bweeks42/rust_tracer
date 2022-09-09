@@ -20,7 +20,7 @@ impl Vec3 {
         Vec3 { x: rng.gen_range(min..max), y: rng.gen_range(min..max), z: rng.gen_range(min..max) }
     }
 
-    fn random_in_unit_sphere() -> Vec3 {
+    pub fn random_in_unit_sphere() -> Vec3 {
         loop {
             let p = Vec3::random(-1.0, 1.0);
             if length(&p) * length(&p) >= 1.0 {continue};
@@ -31,6 +31,13 @@ impl Vec3 {
     pub fn random_unit_vector() -> Vec3 {
         unit_vector(Vec3::random_in_unit_sphere())
     }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
+
+
 }
 
 impl ops::Add<Vec3> for Vec3 {
@@ -86,4 +93,8 @@ pub fn length(u: &Vec3) -> f64 {
 
 pub fn unit_vector(u: Vec3) -> Vec3 {
     u / length(&u)
+}
+
+pub fn reflect(u: Vec3, v: Vec3) -> Vec3 {
+    u - v * 2.0 * dot(&u,&v)
 }
