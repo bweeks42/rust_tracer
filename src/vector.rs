@@ -2,7 +2,7 @@ use std::ops;
 use rand::Rng;
 
 // Vectors
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -23,7 +23,7 @@ impl Vec3 {
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
             let p = Vec3::random(-1.0, 1.0);
-            if length(&p) * length(&p) >= 1.0 {continue};
+            if length_squared(&p) >= 1.0 {continue};
             return p
         }
     }
@@ -75,8 +75,15 @@ impl ops::Div<f64> for Vec3 {
     }
 }
 
+impl ops::Neg for Vec3 {
+    type Output = Vec3;
+    fn neg(self) -> Self::Output {
+        Vec3 {x: self.x * -1.0, y: self.y * -1.0, z: self.z * -1.0}
+    }
+}
+
 pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
-    u.x * v.x + u.y * v.y + u.z * v.z
+    (u.x * v.x) + (u.y * v.y) + (u.z * v.z)
 }
 
 pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
@@ -87,8 +94,12 @@ pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
     }
 }
 
+pub fn length_squared(u: &Vec3) -> f64 {
+    u.x*u.x + u.y*u.y + u.z*u.z
+}
+
 pub fn length(u: &Vec3) -> f64 {
-    f64::sqrt(u.x*u.x + u.y*u.y + u.z*u.z)
+    f64::sqrt(length_squared(u))
 }
 
 pub fn unit_vector(u: Vec3) -> Vec3 {
@@ -97,4 +108,12 @@ pub fn unit_vector(u: Vec3) -> Vec3 {
 
 pub fn reflect(u: Vec3, v: Vec3) -> Vec3 {
     u - v * 2.0 * dot(&u,&v)
+}
+
+pub fn refract(uv: Vec3, n: Vec3, etai_over_etat:f64) -> Vec3 {
+    let cos_theta = f64::min(dot(&(-uv), &n), 1.0);
+    let r_out_perp = (uv + (n*cos_theta))*etai_over_etat;
+    let perp_2 = f64::abs(1.0 - length_squared(&r_out_perp));
+    let r_out_parl = n * -f64::sqrt(perp_2);
+    r_out_perp + r_out_parl
 }

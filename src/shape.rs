@@ -1,6 +1,6 @@
 use crate::material::Material;
 use crate::{Vec3, Ray, Hit};
-use crate::vector::{length, dot};
+use crate::vector::{length, dot, length_squared};
 use crate::ray::{ray_at};
 
 // Shapes
@@ -18,9 +18,9 @@ pub trait Shape: Send + Sync {
 impl Shape for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit: &mut Hit) -> bool {
         let oc = r.origin - self.center;
-        let a = length(&r.direction) * length(&r.direction);
+        let a = length_squared(&r.direction);
         let half_b = dot(&oc, &r.direction);
-        let c = length(&oc) * length(&oc) - self.radius*self.radius;
+        let c = length_squared(&oc) - self.radius*self.radius;
         let discriminant = half_b*half_b - a*c;
         if discriminant < 0.0 {
             return false
@@ -39,9 +39,6 @@ impl Shape for Sphere {
         let outward_normal = (hit.point - self.center) / self.radius;
         hit.set_face_normal(r, outward_normal);
         hit.material = Some(self.material);
-
-
-
         true
     }
 
